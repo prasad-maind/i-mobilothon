@@ -343,6 +343,10 @@ td.v {
   color: var(--text-3); transition: color .12s, background .12s;
 }
 .icon-btn:hover { color: var(--text-2); background: var(--bg-hover); }
+
+/* A mouse has no camera worth opening; a finger usually does. */
+.camera-btn { display: none; }
+@media (pointer: coarse) { .camera-btn { display: flex; } }
 #sendBtn {
   flex-shrink: 0; width: 34px; height: 34px; background: var(--send-bg);
   border: none; border-radius: 50%; cursor: pointer;
@@ -553,6 +557,18 @@ td.v {
       <div class="preview-strip" id="previewStrip"></div>
       <div class="input-row">
 
+        <label class="icon-btn camera-btn" title="Take a photograph">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <!-- capture sends the rear camera straight up, no picker in between.
+               It also overrides multiple, so this is one shot per tap and the
+               paperclip stays for choosing several at once. -->
+          <input type="file" accept="image/*" capture="environment" hidden id="cameraInput">
+        </label>
+
         <label class="icon-btn" title="Attach photographs">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -660,6 +676,11 @@ queryInput.addEventListener("keydown", event => {
 
 /* ── attaching ── */
 fileInput.addEventListener("change", () => { addFiles([...fileInput.files]); fileInput.value = ""; });
+
+const cameraInput = document.getElementById("cameraInput");
+cameraInput.addEventListener("change", () => {
+  addFiles([...cameraInput.files]); cameraInput.value = "";
+});
 
 ["dragenter", "dragover"].forEach(type =>
   inputZone.addEventListener(type, e => { e.preventDefault(); inputZone.classList.add("dragover"); }));
