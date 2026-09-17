@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>VW Group · Logistics Readiness</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -120,6 +120,7 @@ body {
 .chat-area {
   flex: 1; overflow-y: auto; padding: 28px 20px 16px;
   scroll-behavior: smooth; display: flex; flex-direction: column;
+  overscroll-behavior: contain;
 }
 .chat-area > * { max-width: 760px; margin-left: auto; margin-right: auto; width: 100%; }
 .chat-area::-webkit-scrollbar { width: 5px; }
@@ -127,14 +128,20 @@ body {
 .chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
 /* ── Hero (empty state) ── */
-.hero { margin: auto; display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.hero-mark {
-  width: 52px; height: 52px; background: var(--teal); border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 18px rgba(0,140,130,.28);
+/* ── Opening turn ──
+   The first thing in the transcript is an ordinary assistant message, so
+   the instructions sit where every later answer will. */
+.bubble.entry p + p { margin-top: 9px; }
+.bubble.entry strong { font-weight: 600; }
+.bubble.entry code {
+  font-family: "Cascadia Code", Consolas, ui-monospace, monospace;
+  font-size: 12.5px; color: var(--text);
+  background: var(--bg-subtle); border: 1px solid var(--border);
+  border-radius: var(--r-xs); padding: 1px 5px;
 }
-.hero h1 { font-size: 21px; font-weight: 600; letter-spacing: -0.4px; text-align: center; }
-.hero p { color: var(--text-3); font-size: 13.5px; text-align: center; max-width: 470px; }
+.entry-list { margin: 9px 0 0 18px; color: var(--text-2); font-size: 13.5px; }
+.entry-list li { margin: 4px 0; }
+.entry-offline { color: var(--orange); }
 
 /* ── Messages ── */
 .msg { display: flex; gap: 14px; padding: 10px 0; animation: msgIn .18s ease both; }
@@ -147,14 +154,48 @@ body {
 .bubble { font-size: 14.5px; line-height: 1.7; word-break: break-word; max-width: calc(100% - 42px); }
 .msg.user .bubble {
   background: var(--surface-2); border-radius: var(--r-lg);
-  padding: 11px 15px; max-width: 76%;
+  padding: 4.5px 7px; max-width: 76%;
 }
 .user-shots { display: flex; gap: 7px; flex-wrap: wrap; }
 .user-shots img {
   width: 176px; height: 176px; object-fit: cover;
-  border-radius: var(--r-sm); border: 1px solid var(--border);
+  border-radius: var(--r-sm); border: 0.4px solid var(--border);
+  cursor: zoom-in;
 }
 .user-note { margin-top: 8px; font-size: 14px; }
+
+/* ── Lightbox ──
+   The thumbnail is a crop; this is the whole photograph. It stays in the
+   DOM and is toggled by .open, so the same node fades in and out and no
+   second copy of the image is ever fetched. */
+.lightbox {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  padding: 5vh 5vw;
+  background: rgba(0, 0, 0, .78);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+  cursor: zoom-out;
+  opacity: 0; visibility: hidden;
+  transition: opacity .18s ease, visibility 0s linear .18s;
+}
+.lightbox.open { opacity: 1; visibility: visible; transition: opacity .18s ease; }
+.lightbox img {
+  max-width: 90vw; max-height: 90vh; width: auto; height: auto;
+  object-fit: contain;
+  border-radius: var(--r-md);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .5);
+  transform: scale(.96); transition: transform .18s ease;
+}
+.lightbox.open img { transform: scale(1); }
+@media (prefers-reduced-motion: reduce) {
+  .lightbox, .lightbox img, .report-btn, .report-btn svg { transition: none; }
+  .report-btn:hover, .report-btn:active { transform: none; }
+  .report-btn:hover svg { transform: none; }
+}
+
+/* The chat column is the scroller here, not the body, so it is the one
+   that has to hold still while the preview is up. */
+body.lightbox-open .chat-area { overflow: hidden; }
 
 /* ── Verdict ── */
 .verdict { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -331,6 +372,146 @@ td.v {
   text-align: center; font-size: 11px; color: var(--text-4);
   margin-top: 8px; letter-spacing: 0.2px;
 }
+
+/* ═══════════════════════════════════════════════════
+   PHONES
+   The desktop layout above is the default. These rules
+   take over only where a fixed size stops fitting.
+═══════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  /* The centred block and the absolutely-placed right block overlap on a
+     narrow bar, so it becomes an ordinary row and the secondary wordmark
+     steps out rather than collide with the controls. */
+  .topbar { justify-content: space-between; padding: 0 12px; gap: 8px; }
+  .topbar-right { position: static; right: auto; gap: 6px; }
+  .topbar-dot, .topbar-sub { display: none; }
+  .topbar-title { font-size: 13px; }
+  .model-badge { font-size: 10px; padding: 3px 8px; }
+
+  .chat-area { padding: 16px 14px 12px; }
+  .entry-list { font-size: 13px; margin-left: 16px; }
+
+  .msg { gap: 10px; }
+  .msg.user .bubble { max-width: 90%; }
+
+  /* The fixed 176px square fits one to a row here and wastes the rest.
+     auto-fit gives two across on a normal phone and collapses the empty
+     track when there is a single shot, so one photo fills the bubble
+     instead of sitting at half width. Still square, still cropped. */
+  .user-shots { display: grid; gap: 6px;
+    grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); }
+  .user-shots img { width: 100%; height: auto; aspect-ratio: 1 / 1; }
+
+  /* Ids and codes are the values most likely to run past the column edge. */
+  td.k { width: 44%; }
+  td.v { overflow-wrap: anywhere; }
+
+  /* 16px is the size below which iOS Safari zooms the page on focus, and
+     the bar has to clear the home indicator. */
+  #queryInput { font-size: 16px; }
+  .input-zone { padding: 8px 12px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .input-box { padding: 8px 8px 8px 14px; }
+  .disclaimer { font-size: 10px; }
+
+  /* Touch targets. */
+  .icon-btn, #sendBtn { width: 40px; height: 40px; }
+  .report-btn { width: 100%; justify-content: center; padding: 12px 18px; }
+  .chip .rm { width: 22px; height: 22px; font-size: 10px; top: -7px; right: -7px; }
+}
+
+/* ── Report ──
+   The letterhead and the plates exist in every answer but only ever show
+   on paper. The button is the reverse. */
+.report-head, .report-shots { display: none; }
+.msg-actions { margin-top: 16px; }
+.report-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: -0.1px;
+  color: #fff; background: var(--teal);
+  border: 1px solid transparent; border-radius: var(--r-full);
+  padding: 9px 18px; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 4px 14px rgba(0,140,130,.22);
+  transition: background .15s, box-shadow .18s, transform .12s;
+}
+.report-btn:hover {
+  background: var(--teal-light);
+  box-shadow: 0 2px 5px rgba(0,0,0,.09), 0 10px 26px rgba(0,140,130,.34);
+  transform: translateY(-1px);
+}
+.report-btn:active {
+  transform: translateY(0) scale(.98);
+  box-shadow: 0 1px 2px rgba(0,0,0,.12);
+}
+.report-btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+/* The sheet feeds into the printer as the pointer arrives. */
+.report-btn svg { transition: transform .18s ease; }
+.report-btn:hover svg { transform: translateY(1.5px); }
+
+@media print {
+  @page { size: A4; margin: 16mm; }
+
+  /* The app is a fixed, single-screen shell. On paper it has to become an
+     ordinary document that flows over as many pages as it needs. */
+  html, body { height: auto; overflow: visible; background: #fff; }
+  .chat-area {
+    display: block; overflow: visible; padding: 0;
+    scroll-behavior: auto;
+  }
+  .chat-area > * { max-width: none; }
+
+  /* Everything except the one inspection being reported. */
+  .topbar, .input-zone, .lightbox, .msg-actions { display: none !important; }
+  body.printing .chat-area > *:not(.print-target) { display: none !important; }
+
+  .msg { display: block; padding: 0; animation: none; }
+  .avatar { display: none; }
+  .bubble { max-width: none !important; font-size: 11pt; }
+
+  .report-head {
+    display: block; border-bottom: 2px solid #0D0D0D;
+    padding-bottom: 8px; margin-bottom: 16px;
+  }
+  .report-brand { font-size: 13pt; font-weight: 600; letter-spacing: -0.2px; }
+  .report-meta { font-size: 9pt; color: #545454; margin-top: 2px; }
+
+  /* The photographs open the report, centred on the page. A single shot
+     is given the room; several sit two to a row, still centred. */
+  .report-shots {
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start;
+    gap: 6mm; margin: 0 0 16px; break-inside: avoid;
+  }
+  .report-shots img {
+    max-width: 47%; max-height: 80mm; width: auto; height: auto;
+    object-fit: contain; border: 1px solid #E5E5E5; border-radius: 3px;
+  }
+  .report-shots img:only-child { max-width: 88%; max-height: 110mm; }
+
+  /* On paper the two halves of the evidence run across the full width,
+     one under the other, rather than side by side in narrow columns. */
+  .panels { display: block; gap: 0; }
+  .panel { margin-bottom: 14px; }
+  .panel table { width: 100%; }
+  td.k { width: 34%; }
+
+  /* A finding split over a page break loses the line that explains it. */
+  .panel, .finding, .verdict { break-inside: avoid; }
+
+  /* The severity colours carry meaning, so they are not dropped. */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* A finger has no hover. Left unguarded, these stick on after a tap. */
+@media (hover: none) {
+  .icon-btn:hover { color: var(--text-3); background: transparent; }
+  #sendBtn:hover:not(:disabled) { background: var(--send-bg); }
+  .chip .rm:hover { background: #555; }
+  .report-btn:hover {
+    background: var(--teal); transform: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 4px 14px rgba(0,140,130,.22);
+  }
+  .report-btn:hover svg { transform: none; }
+}
 </style>
 </head>
 <body>
@@ -363,19 +544,7 @@ td.v {
 </header>
 
 <div class="chat-area" id="chatArea">
-  <div class="hero" id="hero">
-    <div class="hero-mark">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white"
-           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
-      </svg>
-    </div>
-    <h1>Photograph an inbound unit</h1>
-    <p>Attach one or more images of the same unit. The label is read from the
-      photograph and matched against the shipment record{% if not visionReady %}
-      &mdash; <strong>vision is offline right now, so nothing can be looked at</strong>{% endif %}.</p>
-  </div>
+  <!-- The opening turn is written in by addEntry() on load. -->
 </div>
 
 <div class="input-zone" id="inputZone">
@@ -408,10 +577,46 @@ td.v {
   </div>
 </div>
 
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-hidden="true">
+  <img id="lightboxImg" alt="">
+</div>
+
 <script>
 const CONFIDENCE = {
   low: ["conf-low", 1], medium: ["conf-med", 2], med: ["conf-med", 2], high: ["conf-high", 3]
 };
+
+// The VW mark that heads every turn the console takes.
+const AVATAR = `
+  <div class="avatar">
+    <svg width="15" height="15" viewBox="0 0 46 46" fill="none" stroke="white"
+         stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15.5 11 L23 27.5 L30.5 11"/>
+      <path d="M9.5 18 L15.8 33 L23 21.5 L30.2 33 L36.5 18"/>
+    </svg>
+  </div>`;
+
+// Flask knows whether the credentials are there; the opening turn says so.
+const VISION_READY = {{ 'true' if visionReady else 'false' }};
+
+/* What the console opens with. The photograph is only ever half of the
+   check, so the opening turn says that before the first upload rather
+   than after the first surprising verdict. */
+const ENTRY =
+  "**Attach photographs of one inbound unit to begin.**\n"
+  + "- One or more shots of the *same* unit — a torn face on any angle "
+  + "counts against the whole unit\n"
+  + "- The shipment is matched from the label in the photograph, or name it "
+  + "yourself, for example `SHP-2026-00001`\n"
+  + "- Add a note if something is easier to say than to photograph\n"
+  + "- Paste a screenshot straight in, or drop the files onto the window\n"
+  + "\nWhat the camera sees is evidence, not the verdict. The decision comes "
+  + "from holding it against the shipment record, and it will always name the "
+  + "field and the value that caused it."
+  + (VISION_READY ? "" :
+     "\n! **Vision is offline right now, so nothing can be looked at.** Every "
+     + "unit comes back as Manual review with the reason attached, and the "
+     + "record half of the check still runs.");
 
 // Drawn once so every warning tag carries the same mark.
 const WARN_ICON = `<svg width="10" height="10" viewBox="0 0 16 16" fill="none"
@@ -424,12 +629,13 @@ const SEVERITY = {
 };
 
 const chatArea  = document.getElementById("chatArea");
-const hero      = document.getElementById("hero");
 const fileInput = document.getElementById("fileInput");
 const queryInput= document.getElementById("queryInput");
 const sendBtn   = document.getElementById("sendBtn");
 const strip     = document.getElementById("previewStrip");
 const inputZone = document.getElementById("inputZone");
+const lightbox  = document.getElementById("lightbox");
+const lightboxImg = document.getElementById("lightboxImg");
 
 let attached = [];
 
@@ -463,6 +669,46 @@ inputZone.addEventListener("drop", event => {
   addFiles([...event.dataTransfer.files].filter(f => f.type.startsWith("image/")));
 });
 
+/* ── image preview ──
+   Shots are drawn into the transcript after this runs, so the click is
+   caught on the chat column and matched on the way up. */
+chatArea.addEventListener("click", event => {
+  const shot = event.target.closest(".user-shots img");
+  if (shot) openLightbox(shot);
+});
+
+function openLightbox(shot) {
+  lightboxImg.src = shot.currentSrc || shot.src;
+  lightboxImg.alt = shot.alt || "";
+  lightbox.classList.add("open");
+  lightbox.setAttribute("aria-hidden", "false");
+  document.body.classList.add("lightbox-open");
+}
+
+function closeLightbox() {
+  if (!lightbox.classList.contains("open")) return;
+  lightbox.classList.remove("open");
+  lightbox.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("lightbox-open");
+}
+
+// Anywhere on the overlay closes it, the enlarged image included.
+lightbox.addEventListener("click", closeLightbox);
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeLightbox();
+});
+
+/* A screenshot on the clipboard is attached like any other file. Anything
+   else on the clipboard is left alone, so the textarea still pastes text
+   the way it always did. */
+document.addEventListener("paste", event => {
+  const images = [...(event.clipboardData?.files || [])]
+    .filter(file => file.type.startsWith("image/"));
+  if (!images.length) return;
+  event.preventDefault();
+  addFiles(images);
+});
+
 function addFiles(files) {
   attached.push(...files);
   drawStrip();
@@ -490,8 +736,9 @@ async function send() {
 
   const note = queryInput.value.trim();
   const shots = attached.slice();
+  const urls = shots.map(file => URL.createObjectURL(file));
 
-  addUserMessage(shots, note);
+  addUserMessage(urls, note);
   attached = []; drawStrip();
   queryInput.value = ""; queryInput.style.height = "auto";
 
@@ -506,7 +753,7 @@ async function send() {
     const response = await fetch("/inspect", { method: "POST", body });
     const data = await response.json();
     thinking.remove();
-    addAnswer(data);
+    addAnswer(data, urls);
   } catch (error) {
     thinking.remove();
     addAnswer({ error: String(error) });
@@ -515,6 +762,33 @@ async function send() {
   }
 }
 sendBtn.addEventListener("click", send);
+
+/* ── report ──
+   Printing is the whole mechanism: the chosen inspection is marked, the
+   print sheet takes everything else off the page, and the browser offers
+   Save as PDF or a printer. Dark mode is put aside for the duration so
+   the paper does not come out black. */
+chatArea.addEventListener("click", event => {
+  const button = event.target.closest(".report-btn");
+  if (button) printReport(button.closest(".msg"));
+});
+
+function printReport(node) {
+  const theme = document.documentElement.dataset.theme;
+  document.documentElement.dataset.theme = "light";
+  node.classList.add("print-target");
+  document.body.classList.add("printing");
+
+  const restore = () => {
+    node.classList.remove("print-target");
+    document.body.classList.remove("printing");
+    if (theme) document.documentElement.dataset.theme = theme;
+    else delete document.documentElement.dataset.theme;
+    window.removeEventListener("afterprint", restore);
+  };
+  window.addEventListener("afterprint", restore);
+  window.print();
+}
 
 /* ── rendering ── */
 function esc(text) {
@@ -529,8 +803,41 @@ function rows(pairs) {
     .join("");
 }
 
+/* The little of Markdown the entry text actually uses: **bold**, *emphasis*,
+   `code`, "- " bullets, and "! " for a line that needs the warning colour.
+   Escaped first, so the text can never carry markup of its own. */
+function md(text) {
+  const inline = line => esc(line)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+
+  const out = [];
+  let listOpen = false;
+
+  String(text).split("\n").forEach(line => {
+    const bullet = line.match(/^-\s+(.*)$/);
+    if (bullet) {
+      if (!listOpen) { out.push(`<ul class="entry-list">`); listOpen = true; }
+      out.push(`<li>${inline(bullet[1])}</li>`);
+      return;
+    }
+    if (listOpen) { out.push("</ul>"); listOpen = false; }
+
+    const warn = line.match(/^!\s+(.*)$/);
+    if (warn) { out.push(`<p class="entry-offline">${inline(warn[1])}</p>`); return; }
+    if (line.trim()) out.push(`<p>${inline(line)}</p>`);
+  });
+
+  if (listOpen) out.push("</ul>");
+  return out.join("");
+}
+
+function addEntry() {
+  push(`${AVATAR}<div class="bubble entry">${md(ENTRY)}</div>`, "msg");
+}
+
 function push(html, className) {
-  hero.style.display = "none";
   const node = document.createElement("div");
   node.className = className;
   node.innerHTML = html;
@@ -539,9 +846,8 @@ function push(html, className) {
   return node;
 }
 
-function addUserMessage(files, note) {
-  const shots = files.map(file =>
-    `<img src="${URL.createObjectURL(file)}" alt="">`).join("");
+function addUserMessage(urls, note) {
+  const shots = urls.map(url => `<img src="${url}" alt="">`).join("");
   push(`<div class="bubble">
           <div class="user-shots">${shots}</div>
           ${note ? `<div class="user-note">${esc(note)}</div>` : ""}
@@ -549,30 +855,14 @@ function addUserMessage(files, note) {
 }
 
 function addTyping() {
-  return push(`
-    <div class="avatar">
-      <svg width="15" height="15" viewBox="0 0 46 46" fill="none" stroke="white"
-           stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M15.5 11 L23 27.5 L30.5 11"/>
-        <path d="M9.5 18 L15.8 33 L23 21.5 L30.2 33 L36.5 18"/>
-      </svg>
-    </div>
+  return push(`${AVATAR}
     <div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`,
     "msg");
 }
 
-function addAnswer(data) {
-  const avatar = `
-    <div class="avatar">
-      <svg width="15" height="15" viewBox="0 0 46 46" fill="none" stroke="white"
-           stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M15.5 11 L23 27.5 L30.5 11"/>
-        <path d="M9.5 18 L15.8 33 L23 21.5 L30.2 33 L36.5 18"/>
-      </svg>
-    </div>`;
-
+function addAnswer(data, shots = []) {
   if (data.error) {
-    push(`${avatar}<div class="bubble err">${esc(data.error)}</div>`, "msg");
+    push(`${AVATAR}<div class="bubble err">${esc(data.error)}</div>`, "msg");
     return;
   }
 
@@ -613,8 +903,24 @@ function addAnswer(data) {
         </div>`).join("")}</div>`
     : "";
 
-  push(`${avatar}
+  // The letterhead and the photographs are for paper only; on screen the
+  // topbar and the message above already say all of this.
+  const stamp = new Date().toLocaleString("en-GB",
+    { dateStyle: "long", timeStyle: "short" });
+  const head = `
+    <div class="report-head">
+      <div class="report-brand">Volkswagen Group &middot; Logistics Readiness</div>
+      <div class="report-meta">Inspection report &middot; ${esc(stamp)}</div>
+    </div>`;
+  const plates = shots.length
+    ? `<div class="report-shots">${shots.map(url =>
+        `<img src="${url}" alt="">`).join("")}</div>`
+    : "";
+
+  push(`${AVATAR}
     <div class="bubble">
+      ${head}
+      ${plates}
       <div class="verdict">
         <span class="decision d${severity}">${esc(data.Expected_Decision)}</span>
         <span class="pill"><span class="mono">${esc(data.Scenario_Code)}</span>
@@ -648,8 +954,20 @@ function addAnswer(data) {
       </div>
 
       ${findings}
+      <div class="msg-actions">
+        <button class="report-btn" title="Print this inspection, or save it as a PDF">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Save report
+        </button>
+      </div>
     </div>`, "msg");
 }
+
+addEntry();
 </script>
 </body>
 </html>
