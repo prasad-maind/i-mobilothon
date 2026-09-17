@@ -1,0 +1,19 @@
+# Image-to-Logistics Readiness
+#
+#   pip install -r requirements.txt
+#   python src/server.py
+
+# Reading the workbook. The only thing report.py needs.
+openpyxl>=3.1
+
+# Talking to LLMaaS. httpx does the Cloud IDP token exchange directly; the
+# OpenAI client talks to the gateway, which is OpenAI-compatible.
+openai>=1.40
+httpx>=0.27
+
+# The web app.
+flask>=3.0
+
+# Resizing photos before sending them. Optional - without it the images go up
+# full size, which costs tokens but still works.
+pillow>=10.0
