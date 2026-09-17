@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PORT = int(os.getenv("PORT", "5000"))
-HOST = os.getenv("HOST", "127.0.0.1")
+HOST = os.getenv("HOST", "0.0.0.0")
 
 MAX_IMAGES = int(os.getenv("MAX_IMAGES", "6"))
 MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "25"))
@@ -113,7 +113,7 @@ def main():
               f"that's set.")
     print()
 
-    app.run(host=HOST, port=PORT, debug=True, use_reloader=False)
+    app.run(host=HOST, port=PORT, debug=False, use_reloader=False)
 
 
 if __name__ == "__main__":
